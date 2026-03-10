@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>For My BFF</title>
+</head>
+<body style="margin:0;background:#000;overflow:hidden;font-family:Georgia,serif">
+
+<!-- ===== NAME INPUT SCREEN ===== -->
+<div id="login" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,#0a0015,#1a0030,#0a0015);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:999">
+
+<div style="text-align:center;padding:20px">
+<div style="font-size:55px;margin-bottom:8px">🌸</div>
+<div style="color:#ff85b3;font-size:20px;letter-spacing:3px;margin-bottom:8px">Someone special deserves this</div>
+<div style="color:rgba(255,180,210,0.5);font-size:13px;margin-bottom:30px">only the right person can open this 💕</div>
+
+<div style="color:#ffb0cc;font-size:15px;margin-bottom:12px;letter-spacing:1px">What's your name?</div>
+
+<input id="nameInput" type="text" placeholder="Type your name..." style="
+  width:230px;padding:14px 20px;border:2px solid #ff69b4;border-radius:30px;
+  background:rgba(255,105,180,0.08);color:#ffb6d9;font-size:18px;text-align:center;
+  outline:none;font-family:Georgia,serif;letter-spacing:2px">
+
+<div id="errorMsg" style="color:#ff4477;font-size:12px;margin-top:8px;height:18px;opacity:0;transition:opacity 0.3s"></div>
+
+<button onclick="checkName()" style="
+  margin-top:12px;padding:12px 40px;border:none;border-radius:30px;
+  background:linear-gradient(135deg,#ff69b4,#ff1493);color:#fff;font-size:16px;
+  font-family:Georgia,serif;letter-spacing:2px;cursor:pointer;
+  box-shadow:0 0 20px rgba(255,105,180,0.4)">
+  💕 Open 💕
+</button>
+
+<div style="color:rgba(255,180,210,0.25);font-size:10px;margin-top:35px">hint: my bestfriend's name 🤍</div>
+</div>
+</div>
+
+<!-- ===== CANVAS ===== -->
+<canvas id="c" style="display:none"></canvas>
+
+<script>
+var nameInput = document.getElementById("nameInput");
+var errorMsg = document.getElementById("errorMsg");
+var loginScreen = document.getElementById("login");
+var canvas = document.getElementById("c");
+var started = false;
+
+nameInput.focus();
+nameInput.addEventListener("keydown", function(e){
+  if(e.key === "Enter") checkName();
+});
+
+function checkName(){
+  var name = nameInput.value.trim().toLowerCase();
+  if(name === "bea"){
+    errorMsg.style.opacity = "0";
+    loginScreen.style.transition = "opacity 1.5s";
+    loginScreen.style.opacity = "0";
+    setTimeout(function(){
+      loginScreen.style.display = "none";
+      canvas.style.display = "block";
+      if(!started){ started = true; startAnimation(); }
+    }, 1500);
+  } else if(name === ""){
+    errorMsg.textContent = "Type your name first 💕";
+    errorMsg.style.opacity = "1";
+    shake();
+  } else {
+    errorMsg.textContent = "Sorry, this isn't for you 🥺";
+    errorMsg.style.opacity = "1";
+    shake();
+  }
+}
+
+function shake(){
+  nameInput.style.transition = "transform 0.1s";
+  nameInput.style.transform = "translateX(-8px)";
+  setTimeout(function(){ nameInput.style.transform = "translateX(8px)"; }, 100);
+  setTimeout(function(){ nameInput.style.transform = "translateX(-4px)"; }, 200);
+  setTimeout(function(){ nameInput.style.transform = "translateX(4px)"; }, 300);
+  setTimeout(function(){ nameInput.style.transform = "translateX(0)"; }, 400);
+}
+
+// ========================================
+function startAnimation(){
+var ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+var W = canvas.width;
+var H = canvas.height;
+var t = 0;
+
+window.onresize = function(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  W = canvas.width;
+  H = canvas.height;
+  grass = [];
+  initGrass();
+};
+
+// ===== BFF MESSAGES =====
+var messages = [
+  {text: "Hey Bea! 💕", delay: 0, dur: 250},
+  {text: "You're my bestfriend", delay: 250, dur: 250},
+  {text: "and I just want you to know...", delay: 500, dur: 250},
+  {text: "You're one of the best things", delay: 750, dur: 250},
+  {text: "that ever happened to me 🌸", delay: 1000, dur: 250},
+  {text: "Thank you for always being there", delay: 1300, dur: 250},
+  {text: "for making me laugh", delay: 1550, dur: 250},
+  {text: "for listening to my kwento", delay: 1800, dur: 250},
+  {text: "for understanding me always", delay: 2050, dur: 250},
+  {text: "You're not just my BFF", delay: 2350, dur: 250},
+  {text: "You're my comfort person 💗", delay: 2600, dur: 250},
+  {text: "Kahit anong mangyari", delay: 2900, dur: 250},
+  {text: "I'll always be here for you", delay: 3150, dur: 250},
+  {text: "Just like these flowers 🌸", delay: 3450, dur: 250},
+  {text: "that bloom just for you", delay: 3700, dur: 250},
+  {text: "You're the best, Bea 💕", delay: 4000, dur: 250},
+  {text: "Forever and always 🤍", delay: 4300, dur: 400},
+  {text: "- Your Bestfriend 🌸💕", delay: 4700, dur: 9999}
+];
+
+var msgTimer = 0;
+var currentMsg = -1;
+var msgAlpha = 0;
+var msgFading = false;
+var msgText = "";
+
+// ===== FLOWERS =====
+var flowers = [];
+var nextF = 0;
+var fInterval = 65;
+
+function addFlower(){
+  var cx = W / 2;
+  flowers.push({
+    x: cx + (Math.random() - 0.5) * W * 0.55,
+    by: H - 10,
+    h: H * (0.2 + Math.random() * 0.28),
+    ln: (Math.random() - 0.5) * 45,
+    gr: 0,
+    pc: Math.floor(Math.random() * 3) + 5,
+    ps: Math.random() * 11 + 14,
+    hu: 320 + Math.random() * 28,
+    sa: 60 + Math.random() * 28,
+    li: 65 + Math.random() * 18,
+    ph: Math.random() * 6.28,
+    ss: Math.random() * 0.3 + 0.3,
+    sm: Math.random() * 5 + 3,
+    ll: Math.random() > 0.3,
+    lr: Math.random() > 0.35,
+    lp1: 0.28 + Math.random() * 0.14,
+    lp2: 0.48 + Math.random() * 0.14,
+    ls1: 18 + Math.random() * 18,
+    ls2: 15 + Math.random() * 16
+  });
+}
+
+// ===== GRASS =====
+var grass = [];
+function initGrass(){
+  for(var i = 0; i < 55; i++){
+    grass.push({
+      x: Math.random() * W,
+      h: 20 + Math.random() * 55,
+      w: 1.5 + Math.random() * 2,
+      cv: (Math.random() - 0.5) * 20,
+      sp: Math.random() * 0.4 + 0.3,
+      ph: Math.random() * 6.28,
+      ly: i < 28 ? 0 : 1,
+      hu: 115 + Math.random() * 28,
+      lt: 12 + Math.random() * 13
+    });
+  }
+}
+initGrass();
+
+// ===== PARTICLES =====
+var parts = [];
+for(var i = 0; i < 28; i++){
+  parts.push({
+    x: Math.random() * W,
+    y: Math.random() * H * 0.75 + H * 0.08,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: -Math.random() * 0.3 - 0.08,
+    s: Math.random() * 2 + 0.7,
+    p: Math.random() * 6.28,
+    sp: Math.random() * 0.025 + 0.01,
+    tp: Math.random() > 0.5 ? 0 : 1
+  });
+}
+
+// ===== HEARTS =====
+var hearts = [];
+function addHeart(){
+  if(Math.random() > 0.02) return;
+  hearts.push({
+    x: Math.random() * W, y: -28,
+    s: Math.random() * 14 + 9,
+    vy: Math.random() * 0.7 + 0.35,
+    vx: Math.random() * 0.5 - 0.25,
+    r: Math.random() * 360,
+    rs: Math.random() * 1.2 - 0.6,
+    o: Math.random() * 0.35 + 0.25,
+    w: Math.random() * 6.28,
+    ws: Math.random() * 0.025 + 0.01,
+    nm: Math.random() > 0.3
+  });
+}
+
+// ===== DRAW HELPERS =====
+function drawHeart(px, py, sz){
+  ctx.beginPath();
+  ctx.moveTo(px, py + sz * 0.3);
+  ctx.bezierCurveTo(px - sz * 0.5, py - sz * 0.1, px - sz * 0.5, py - sz * 0.5, px, py - sz * 0.3);
+  ctx.bezierCurveTo(px + sz * 0.5, py - sz * 0.5, px + sz * 0.5, py - sz * 0.1, px, py + sz * 0.3);
+  ctx.closePath();
+}
+
+function drawLeaf(lx, ly, ang, len, wid){
+  ctx.save();
+  ctx.translate(lx, ly);
+  ctx.rotate((ang + Math.sin(t * 0.011 + lx * 0.05) * 4) * 0.0175);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(len * 0.2, -wid, len * 0.7, -wid * 0.7, len, 0);
+  ctx.bezierCurveTo(len * 0.7, wid * 0.7, len * 0.2, wid, 0, 0);
+  var g = ctx.createLinearGradient(0, 0, len, 0);
+  g.addColorStop(0, "#0d4a0d");
+  g.addColorStop(0.5, "#1a7018");
+  g.addColorStop(1, "#0d4a0d");
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(3, 0);
+  ctx.lineTo(len - 3, 0);
+  ctx.strokeStyle = "rgba(40,110,40,0.3)";
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function dStem(f){
+  var pr = f.gr;
+  if(pr <= 0) return null;
+  var sw = Math.sin(t * 0.011 * f.ss + f.ph) * f.sm;
+  var sH = f.h * (pr < 0.5 ? pr / 0.5 : 1);
+  var tY = f.by - sH;
+  var lX = f.ln * (sH / f.h);
+  var tX = f.x + lX + sw;
+  var cX = f.x + lX * 0.5 + sw * 0.4;
+
+  ctx.beginPath();
+  ctx.moveTo(f.x, f.by);
+  ctx.quadraticCurveTo(cX, f.by - sH * 0.5, tX, tY);
+  var sg = ctx.createLinearGradient(f.x, f.by, tX, tY);
+  sg.addColorStop(0, "#0a3808");
+  sg.addColorStop(1, "#1a7018");
+  ctx.strokeStyle = sg;
+  ctx.lineWidth = 3.5;
+  ctx.lineCap = "round";
+  ctx.stroke();
+
+  if(pr > 0.3 && f.ll){
+    var lp = (pr - 0.3) / 0.3; if(lp > 1) lp = 1;
+    drawLeaf(f.x + (tX - f.x) * f.lp1, f.by - sH * f.lp1, f.ln > 0 ? -50 : 50, f.ls1 * lp, 8 * lp);
+  }
+  if(pr > 0.45 && f.lr){
+    var lp2 = (pr - 0.45) / 0.3; if(lp2 > 1) lp2 = 1;
+    drawLeaf(f.x + (tX - f.x) * f.lp2, f.by - sH * f.lp2, f.ln > 0 ? 45 : -45, f.ls2 * lp2, 7 * lp2);
+  }
+  return {x: tX, y: tY};
+}
+
+function dFlower(fx, fy, f){
+  var bl = f.gr > 0.5 ? (f.gr - 0.5) / 0.5 : 0;
+  if(bl <= 0) return;
+  if(bl > 1) bl = 1;
+  var ps = f.ps * bl;
+
+  ctx.save();
+  ctx.translate(fx, fy);
+  ctx.rotate(Math.sin(t * 0.009 + f.ph) * 3 * 0.017);
+
+  // Glow
+  var gsz = ps * 3.5;
+  var gg = ctx.createRadialGradient(0, -ps * 0.3, 2, 0, -ps * 0.3, gsz);
+  gg.addColorStop(0, "hsla(" + f.hu + "," + f.sa + "%," + (f.li + 15) + "%," + (bl * 0.22) + ")");
+  gg.addColorStop(0.4, "hsla(" + f.hu + "," + f.sa + "%," + f.li + "%," + (bl * 0.07) + ")");
+  gg.addColorStop(1, "hsla(" + f.hu + ",50%,50%,0)");
+  ctx.fillStyle = gg;
+  ctx.beginPath();
+  ctx.arc(0, -ps * 0.3, gsz, 0, 6.28);
+  ctx.fill();
+
+  // Petals
+  var k;
+  for(k = 0; k < f.pc; k++){
+    var ang = (k / f.pc) * 6.28 - 1.57;
+    var wb = Math.sin(t * 0.007 + k * 1.3 + f.ph) * 0.04;
+    ctx.save();
+    ctx.rotate(ang + wb);
+
+    var pL = ps * 2;
+    var pW = ps * 0.7;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-pW * 0.8, -pL * 0.3, -pW * 0.5, -pL * 0.85, 0, -pL);
+    ctx.bezierCurveTo(pW * 0.5, -pL * 0.85, pW * 0.8, -pL * 0.3, 0, 0);
+
+    var pg = ctx.createLinearGradient(0, 0, 0, -pL);
+    pg.addColorStop(0, "hsl(" + f.hu + "," + f.sa + "%," + (f.li - 15) + "%)");
+    pg.addColorStop(0.35, "hsl(" + f.hu + "," + f.sa + "%," + f.li + "%)");
+    pg.addColorStop(0.7, "hsl(" + f.hu + "," + (f.sa - 8) + "%," + (f.li + 10) + "%)");
+    pg.addColorStop(1, "hsl(" + f.hu + "," + (f.sa - 18) + "%," + (f.li + 20) + "%)");
+    ctx.fillStyle = pg;
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+
+    ctx.strokeStyle = "hsla(" + f.hu + ",80%," + (f.li + 25) + "%,0.1)";
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, -3);
+    ctx.lineTo(0, -pL + 5);
+    ctx.strokeStyle = "hsla(" + f.hu + ",45%," + (f.li - 10) + "%,0.15)";
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // Stamen
+  if(bl > 0.7){
+    var sta = (bl - 0.7) / 0.3;
+    for(k = 0; k < 3; k++){
+      var a2 = (k / 3) * 6.28 + t * 0.003;
+      var sx2 = Math.cos(a2) * 4;
+      var sy2 = Math.sin(a2) * 4 - 7;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(sx2, sy2);
+      ctx.strokeStyle = "rgba(195,185,115," + (sta * 0.45) + ")";
+      ctx.lineWidth = 0.7;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(sx2, sy2, 1.5, 0, 6.28);
+      ctx.fillStyle = "rgba(255,210,65," + (sta * 0.7) + ")";
+      ctx.fill();
+    }
+  }
+
+  // Center
+  var cg = ctx.createRadialGradient(0, 0, 0, 0, 0, 4 * bl);
+  cg.addColorStop(0, "rgba(255,255,200," + bl + ")");
+  cg.addColorStop(1, "rgba(255,200,80,0)");
+  ctx.beginPath();
+  ctx.arc(0, 0, 4 * bl, 0, 6.28);
+  ctx.fillStyle = cg;
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ===== MAIN LOOP =====
+function loop(){
+  t++;
+  msgTimer++;
+
+  // Spawn flowers
+  nextF++;
+  if(nextF >= fInterval && flowers.length < 18){
+    addFlower();
+    nextF = 0;
+    fInterval = 50 + Math.floor(Math.random() * 35);
+  }
+
+  // Grow
+  var fi;
+  for(fi = 0; fi < flowers.length; fi++){
+    if(flowers[fi].gr < 1){
+      flowers[fi].gr += 0.007;
+      if(flowers[fi].gr > 1) flowers[fi].gr = 1;
+    }
+  }
+
+  addHeart();
+
+  // Message logic
+  var newMsg = -1;
+  for(var mi = messages.length - 1; mi >= 0; mi--){
+    if(msgTimer >= messages[mi].delay){
+      newMsg = mi;
+      break;
+    }
+  }
+  if(newMsg !== currentMsg){
+    currentMsg = newMsg;
+    if(currentMsg >= 0){
+      msgText = messages[currentMsg].text;
+      msgAlpha = 0;
+      msgFading = false;
+    }
+  }
+  if(currentMsg >= 0){
+    if(!msgFading){
+      msgAlpha += 0.03;
+      if(msgAlpha > 1) msgAlpha = 1;
+      if(currentMsg < messages.length - 1){
+        var endTime = messages[currentMsg].delay + messages[currentMsg].dur;
+        if(msgTimer > endTime - 50) msgFading = true;
+      }
+    } else {
+      msgAlpha -= 0.025;
+      if(msgAlpha < 0) msgAlpha = 0;
+    }
+  }
+
+  // ===== DRAW =====
+  ctx.clearRect(0, 0, W, H);
+
+  // BG
+  var bgr = ctx.createLinearGradient(0, 0, 0, H);
+  bgr.addColorStop(0, "#010008");
+  bgr.addColorStop(0.35, "#020218");
+  bgr.addColorStop(0.6, "#040420");
+  bgr.addColorStop(0.8, "#061208");
+  bgr.addColorStop(1, "#040e04");
+  ctx.fillStyle = bgr;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  for(var si = 0; si < 50; si++){
+    var stx = (Math.sin(si * 127 + si) * 0.5 + 0.5) * W;
+    var sty = (Math.sin(si * 312 + si) * 0.5 + 0.5) * H * 0.38;
+    var sta2 = (Math.sin(t * 0.013 + si * 2) + 1) / 2 * 0.4 + 0.08;
+    ctx.beginPath();
+    ctx.arc(stx, sty, 0.7, 0, 6.28);
+    ctx.fillStyle = "rgba(255,255,255," + sta2 + ")";
+    ctx.fill();
+  }
+
+  // Ground
+  var ggr = ctx.createLinearGradient(0, H - 60, 0, H);
+  ggr.addColorStop(0, "transparent");
+  ggr.addColorStop(0.4, "#081808");
+  ggr.addColorStop(1, "#040c04");
+  ctx.fillStyle = ggr;
+  ctx.fillRect(0, H - 60, W, 60);
+
+  // Back grass
+  for(var gi = 0; gi < grass.length; gi++){
+    var gr = grass[gi];
+    if(gr.ly !== 0) continue;
+    var gsw = Math.sin(t * 0.014 * gr.sp + gr.ph) * gr.cv;
+    ctx.beginPath();
+    ctx.moveTo(gr.x, H - 8);
+    ctx.quadraticCurveTo(gr.x + gsw * 0.5, H - 8 - gr.h * 0.5, gr.x + gsw, H - 8 - gr.h);
+    ctx.strokeStyle = "hsl(" + gr.hu + ",40%," + gr.lt + "%)";
+    ctx.lineWidth = gr.w;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+
+  // Flowers
+  for(fi = 0; fi < flowers.length; fi++){
+    var top = dStem(flowers[fi]);
+    if(top) dFlower(top.x, top.y, flowers[fi]);
+  }
+
+  // Front grass
+  for(gi = 0; gi < grass.length; gi++){
+    var gr2 = grass[gi];
+    if(gr2.ly !== 1) continue;
+    var gsw2 = Math.sin(t * 0.017 * gr2.sp + gr2.ph) * gr2.cv;
+    ctx.beginPath();
+    ctx.moveTo(gr2.x, H - 4);
+    ctx.quadraticCurveTo(gr2.x + gsw2 * 0.5, H - 4 - gr2.h * 0.5, gr2.x + gsw2, H - 4 - gr2.h);
+    ctx.strokeStyle = "hsl(" + gr2.hu + ",36%," + (gr2.lt - 2) + "%)";
+    ctx.lineWidth = gr2.w + 0.5;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+
+  // Particles & Fireflies
+  for(var pi = 0; pi < parts.length; pi++){
+    var pp = parts[pi];
+    pp.x += pp.vx + Math.sin(t * 0.01 + pi) * 0.08;
+    pp.y += pp.vy;
+    pp.p += pp.sp;
+    if(pp.y < -10){
+      pp.y = H * 0.6 + Math.random() * H * 0.25;
+      pp.x = Math.random() * W;
+    }
+    var pul = (Math.sin(pp.p) + 1) / 2;
+
+    if(pp.tp === 0){
+      ctx.beginPath();
+      ctx.arc(pp.x, pp.y, pp.s, 0, 6.28);
+      ctx.fillStyle = "rgba(255,175,215," + (pul * 0.4 + 0.08) + ")";
+      ctx.shadowColor = "rgba(255,140,195,0.3)";
+      ctx.shadowBlur = 5;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else {
+      var gsz2 = pp.s + pul * 2;
+      var a3 = pul * 0.6 + 0.08;
+      var fg = ctx.createRadialGradient(pp.x, pp.y, 0, pp.x, pp.y, gsz2 * 5);
+      fg.addColorStop(0, "rgba(255,255,140," + (a3 * 0.2) + ")");
+      fg.addColorStop(1, "rgba(255,255,100,0)");
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.arc(pp.x, pp.y, gsz2 * 5, 0, 6.28);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(pp.x, pp.y, pp.s * 0.4, 0, 6.28);
+      ctx.fillStyle = "rgba(255,255,185," + a3 + ")";
+      ctx.fill();
+    }
+  }
+
+  // Falling Hearts
+  for(var hi = hearts.length - 1; hi >= 0; hi--){
+    var hh = hearts[hi];
+    hh.w += hh.ws;
+    hh.x += hh.vx + Math.sin(hh.w) * 0.5;
+    hh.y += hh.vy;
+    hh.r += hh.rs;
+    if(hh.y > H + 40){ hearts.splice(hi, 1); continue; }
+
+    ctx.save();
+    ctx.translate(hh.x, hh.y);
+    ctx.rotate(hh.r * 0.0175);
+    ctx.globalAlpha = hh.o;
+    ctx.shadowColor = "rgba(255,90,160,0.3)";
+    ctx.shadowBlur = 7;
+
+    drawHeart(0, 0, hh.s);
+    var hgr = ctx.createRadialGradient(0, -hh.s * 0.1, 0, 0, 0, hh.s);
+    hgr.addColorStop(0, "#ffb0cc");
+    hgr.addColorStop(0.5, "#ff5e94");
+    hgr.addColorStop(1, "#c02860");
+    ctx.fillStyle = hgr;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.arc(-hh.s * 0.13, -hh.s * 0.18, hh.s * 0.08, 0, 6.28);
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.fill();
+
+    if(hh.nm && hh.s > 10){
+      var fsz = hh.s * 0.3;
+      if(fsz < 5) fsz = 5;
+      ctx.font = "bold " + fsz + "px Georgia,serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      ctx.fillText("Bea", 0, 0);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // ===== BFF MESSAGE =====
+  if(currentMsg >= 0 && msgAlpha > 0){
+    ctx.save();
+    ctx.globalAlpha = msgAlpha;
+
+    ctx.font = "bold 20px Georgia,serif";
+    var mw = ctx.measureText(msgText).width;
+    var mx = W / 2;
+    var my = H * 0.13;
+
+    var mg = ctx.createRadialGradient(mx, my, 0, mx, my, mw * 0.7);
+    mg.addColorStop(0, "rgba(255,105,180,0.12)");
+    mg.addColorStop(1, "rgba(255,105,180,0)");
+    ctx.fillStyle = mg;
+    ctx.beginPath();
+    ctx.arc(mx, my, mw * 0.7, 0, 6.28);
+    ctx.fill();
+
+    ctx.font = "bold 20px Georgia,serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffb6d9";
+    ctx.shadowColor = "rgba(255,105,180,0.5)";
+    ctx.shadowBlur = 12;
+    ctx.fillText(msgText, mx, my);
+    ctx.shadowBlur = 0;
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+}
+</script>
+</body>
+  </html>
